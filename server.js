@@ -208,7 +208,7 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
-  if (req.method === 'GET' && url.pathname === '/api/services') return send(res, 200, [...byId.values()].map(view));
+  if (req.method === 'GET' && url.pathname === '/api/services') return send(res, 200, [...byId.values()].map(view).filter(v => v.state !== 'unknown'));   // hide services whose status can't be read
   if (req.method === 'POST' && url.pathname.startsWith('/api/report/')) {
     const s = byId.get(decodeURIComponent(url.pathname.slice(12)));
     if (!s) return send(res, 404, { error: 'Unknown service' });
