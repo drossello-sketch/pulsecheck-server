@@ -1,0 +1,12 @@
+[
+  {"id":"github","name":"GitHub","category":"Developer","url":"https://www.githubstatus.com/api/v2/summary.json"},
+  {"id":"cloudflare","name":"Cloudflare","category":"Cloud","url":"https://www.cloudflarestatus.com/api/v2/summary.json"},
+  {"id":"discord","name":"Discord","category":"Messaging","url":"https://discordstatus.com/api/v2/summary.json"},
+  {"id":"reddit","name":"Reddit","category":"Social","url":"https://www.redditstatus.com/api/v2/summary.json"},
+  {"id":"zoom","name":"Zoom","category":"Work","url":"https://status.zoom.us/api/v2/summary.json"},
+  {"id":"atlassian","name":"Atlassian","category":"Work","url":"https://status.atlassian.com/api/v2/summary.json"},
+  {"id":"dropbox","name":"Dropbox","category":"Work","url":"https://status.dropbox.com/api/v2/summary.json"},
+  {"id":"twilio","name":"Twilio","category":"Cloud","url":"https://status.twilio.com/api/v2/summary.json"},
+  {"id":"digitalocean","name":"DigitalOcean","category":"Cloud","url":"https://status.digitalocean.com/api/v2/summary.json"},
+  {"id":"npm","name":"npm","category":"Developer","url":"https://status.npmjs.org/api/v2/summary.json"}
+]

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulsecheck</title>
+<style>
+:root{--bg:#eceff3;--panel:#fff;--ink:#0f1720;--mute:#5b6775;--line:#d9dfe6;--ok:#17875a;--warn:#c77a00;--bad:#d92d27;--ok-bg:#e1f3ea;--warn-bg:#fbefd6;--bad-bg:#fde4e2;--unk:#8b97a5;--font:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#0c1117;--panel:#141b23;--ink:#e8edf2;--mute:#8b97a5;--line:#25303b;--ok:#3ccf91;--warn:#f0a93a;--bad:#ff5a52;--ok-bg:#12281f;--warn-bg:#2d2411;--bad-bg:#31161a;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font)}
+a{color:inherit}:focus-visible{outline:2px solid var(--bad);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+header{background:var(--panel);border-bottom:1px solid var(--line)}header .wrap{height:58px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:800;font-size:21px;letter-spacing:-.02em;text-decoration:none}
+.meta{font:12px var(--mono);color:var(--mute)}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.03em;margin:30px 0 8px}
+.sub{color:var(--mute);margin:0 0 20px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+input[type=search],input[type=text]{padding:10px 12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font:inherit}
+input[type=search]{flex:1;min-width:200px}
+textarea{padding:10px 12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font:inherit;resize:vertical}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;padding-bottom:40px}
+.card{display:block;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:10px;padding:14px}
+.card.degraded{border-left-color:var(--warn)}.card.outage{border-left-color:var(--bad)}.card.unknown{border-left-color:var(--unk)}
+.card:hover{border-color:var(--mute)}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card h3{margin:0;font-size:17px}.cat{font-size:12px;color:var(--mute)}
+.pill{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap;background:var(--ok-bg);color:var(--ok)}
+.pill.degraded{background:var(--warn-bg);color:var(--warn)}.pill.outage{background:var(--bad-bg);color:var(--bad)}.pill.unknown{background:var(--line);color:var(--mute)}
+.foot{font:12px var(--mono);color:var(--mute);margin-top:10px}
+.back{display:inline-block;margin:22px 0 8px;color:var(--mute);text-decoration:none}
+.dhead{display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.dhead h1{margin:0 0 6px}
+.btn{background:var(--bad);color:#fff;border:0;border-radius:8px;padding:12px 18px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line)}.btn:disabled{opacity:.6;cursor:default}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.panel h2{font-size:15px;margin:0 0 10px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.comp{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}.comp:last-child{border:0}
+.inc{padding:8px 0;border-bottom:1px solid var(--line)}.inc:last-child{border:0}.inc small{color:var(--mute)}
+svg{display:block;width:100%;height:auto}
+.note{color:var(--mute);font-size:13px}
+.err{color:var(--bad);font-size:13px}
+.bar{margin-bottom:10px}.bar .l{display:flex;justify-content:space-between;font-size:13px}.bar .t{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}.bar .f{height:100%;background:var(--bad)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:22px;max-width:400px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.opts{display:grid;gap:8px;margin:12px 0}.opts label{display:flex;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.cw{position:relative}
+.star{position:absolute;right:8px;bottom:8px;background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:var(--mute);padding:4px}
+.star[aria-pressed=true]{color:#e8a400}
+.card .foot{padding-right:30px}
+.toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:50;max-width:min(340px,calc(100% - 32px))}
+.toast{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:5px solid var(--bad);border-radius:10px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-size:14px}
+.toast a{font-weight:600}
+.toast .x{margin-left:8px;border:1px solid var(--line);background:none;border-radius:6px;padding:2px 8px;cursor:pointer;color:var(--ink);font:inherit;font-size:12px}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="#home">Pulsecheck</a><span style="display:flex;gap:10px;align-items:center"><button class="chip" id="alerts" type="button"></button><span class="meta" id="upd">Loading…</span></span></div></header>
+<main class="wrap" id="app"></main>
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+<dialog id="adlg"><form id="aform"><h2 style="margin:0 0 4px">Add a service</h2>
+<p class="note" style="margin:0 0 12px">Status comes from its status page if you give one. Otherwise it comes from user reports.</p>
+<label for="aname" class="note">Name</label><input type="text" id="aname" maxlength="40" style="width:100%;margin:4px 0 10px">
+<label for="acat" class="note">Category</label><input type="text" id="acat" list="acats" maxlength="24" placeholder="Social, Gaming, Cloud" style="width:100%;margin:4px 0 10px"><datalist id="acats"></datalist>
+<label for="aurl" class="note">Status page feed (optional)</label><input type="text" id="aurl" placeholder="https://status.example.com/api/v2/summary.json" style="width:100%;margin:4px 0 4px">
+<div class="note" style="margin-bottom:8px">Works with status pages that run on Atlassian Statuspage. Leave empty to track by user reports only.</div>
+<p class="err" id="aerr" role="alert"></p>
+<div class="actions"><button class="btn ghost" type="button" id="acancel">Cancel</button><button class="btn" type="submit" id="ago">Add service</button></div></form></dialog>
+<dialog id="dlg"><form id="rform"><h2 id="dt" style="margin:0"></h2><div class="opts" id="dopts"></div>
+<input type="text" id="dcity" placeholder="Your city (optional)" aria-label="Your city" style="width:100%"><textarea id="dcomment" maxlength="200" rows="3" placeholder="Add a comment (optional)" aria-label="Comment" style="width:100%;margin-top:8px"></textarea><p class="err" id="derr" role="alert"></p>
+<div class="actions"><button class="btn ghost" type="button" id="dcancel">Cancel</button><button class="btn" type="submit" id="dgo">Send report</button></div></form></dialog>
+<script>
+(function(){
+
+  var favs=[];try{favs=JSON.parse(localStorage.getItem('pulsecheck-favs')||'[]')||[];}catch(e){favs=[];}
+  function isFav(id){return favs.indexOf(id)>-1;}
+  function toggleFav(id){var i=favs.indexOf(id);if(i>-1)favs.splice(i,1);else favs.push(id);try{localStorage.setItem('pulsecheck-favs',JSON.stringify(favs));}catch(e){}render();}
+  function toast(title,body,id){
+    var box=document.getElementById('toasts');if(!box)return;
+    var d=document.createElement('div');d.className='toast';d.setAttribute('role','alert');
+    d.innerHTML='<strong>'+esc(title)+'</strong><div>'+esc(body)+'</div>'+(id?'<a href="#'+esc(id)+'">View</a>':'')+'<button type="button" class="x">Dismiss</button>';
+    d.querySelector('button').onclick=function(){d.remove();};
+    box.appendChild(d);setTimeout(function(){d.remove();},30000);
+  }
+  function notifyOutage(s){
+    var title=s.name+' is reporting an outage',body=(s.official?s.official.description:'Problems detected');
+    toast(title,body,s.id);
+    try{if('Notification' in window&&Notification.permission==='granted'&&document.hidden){new Notification(title,{body:body,tag:'pulsecheck-'+s.id});}}catch(e){}
+  }
+  function alertBtn(){
+    var b=document.getElementById('alerts');if(!b)return;
+    if(!('Notification' in window)){b.textContent='Alerts on this page';b.disabled=true;b.title='This browser has no system notifications. Alerts still appear on this page.';return;}
+    var p=Notification.permission;
+    b.textContent=p==='granted'?'Alerts on':p==='denied'?'Alerts on this page':'Turn on alerts';
+    b.disabled=p!=='default';
+    b.title=p==='denied'?'System notifications are blocked. Allow them for this site in your browser settings.':'Get a system notification when a followed service has an outage';
+  }
+  function askAlerts(){
+    try{var r=Notification.requestPermission(function(){alertBtn();});if(r&&r.then)r.then(alertBtn);}
+    catch(e){toast('Notifications unavailable','This browser blocked the request. Alerts will still appear on this page.');}
+  }
+var ISSUES=['Website','App','Sign-in','Connection'];
+var ICON={Website:'\uD83C\uDF10',App:'\uD83D\uDCF1','Sign-in':'\uD83D\uDD11',Connection:'\uD83D\uDCF6'};
+var LABEL={ok:'No problems',degraded:'Possible problems',outage:'Problems detected',unknown:'Status unavailable'};
+var data=[],ui={q:'',cat:'All',fav:false},prev=null,demo=false,canAdd=false,app=document.getElementById('app'),dlg=document.getElementById('dlg'),cur=null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function ago(t){var m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' h ago';}
+function checkAlerts(d){
+  var now={};d.forEach(function(s){now[s.id]=s.state;});
+  if(prev){d.forEach(function(s){if(isFav(s.id)&&s.state==='outage'&&prev[s.id]&&prev[s.id]!=='outage')notifyOutage(s);});}
+  prev=now;
+}
+function load(){
+  return fetch('/api/services',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
+    data=d;checkAlerts(d);document.getElementById('upd').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
+    if(!dlg.open&&!document.getElementById('adlg').open)render();
+  }).catch(function(){document.getElementById('upd').textContent='Cannot reach the Pulsecheck server';});
+}
+function route(){render();window.scrollTo(0,0);}
+function render(){
+  var id=location.hash.slice(1),s=data.filter(function(x){return x.id===id;})[0];
+  if(s)detail(s);else home();
+}
+function home(){
+  var s0=document.activeElement&&document.activeElement.id==='q';
+  var cats=['All'].concat(data.map(function(s){return s.category;}).filter(function(v,i,a){return a.indexOf(v)===i;}));
+  var bad=data.filter(function(s){return s.state==='outage';}).length,warn=data.filter(function(s){return s.state==='degraded';}).length;
+  var list=data.filter(function(s){return(ui.cat==='All'||s.category===ui.cat)&&(!ui.q||s.name.toLowerCase().indexOf(ui.q.toLowerCase())>-1)&&(!ui.fav||isFav(s.id));});
+  var o={outage:0,degraded:1,unknown:2,ok:3};list.sort(function(a,b){return o[a.state]-o[b.state]||((isFav(b.id)?1:0)-(isFav(a.id)?1:0))||a.name.localeCompare(b.name);});
+  app.innerHTML='<h1>'+(!data.length?'Loading services…':bad?esc(bad)+' service'+(bad>1?'s report':' reports')+' an outage.':warn?esc(warn)+' with possible problems.':'No problems reported.')+'</h1>'+
+  '<p class="sub">Status comes from each service\'s own public status feed, checked every minute, plus problem reports from people using this site.</p>'+
+  '<div class="controls"><input id="q" type="search" placeholder="Search a service" aria-label="Search services" value="'+esc(ui.q)+'"><span id="chips" style="display:flex;gap:6px;flex-wrap:wrap">'+
+  cats.map(function(c){return'<button class="chip" type="button" data-c="'+esc(c)+'" aria-pressed="'+(ui.cat===c&&!ui.fav)+'">'+esc(c)+'</button>';}).join('')+'<button class="chip" type="button" data-fav="1" aria-pressed="'+ui.fav+'">★ Favorites</button></span>'+(canAdd?'<button class="chip" id="addsvc" type="button">+ Add a service</button>':'')+'</div>'+
+  '<div class="grid">'+(list.length?list.map(function(s){
+    var n=s.reports.last15;
+    return'<div class="cw"><a class="card '+s.state+'" href="#'+esc(s.id)+'"><div class="row"><div><h3>'+esc(s.name)+'</h3><div class="cat">'+esc(s.category)+'</div></div><span class="pill '+s.state+'">'+LABEL[s.state]+'</span></div>'+
+    '<div class="foot">'+(s.official?esc(s.official.description):s.reportsOnly?'Tracked by user reports':'No data yet')+'<br>'+n+' user report'+(n===1?'':'s')+' in 15 min</div></a><button class="star" type="button" data-star="'+esc(s.id)+'" aria-pressed="'+isFav(s.id)+'" aria-label="'+(isFav(s.id)?'Unfollow ':'Follow ')+esc(s.name)+'">'+(isFav(s.id)?'★':'☆')+'</button></div>';
+  }).join(''):'<p class="note">No services match.</p>')+'</div>';
+  var q=document.getElementById('q');q.oninput=function(e){ui.q=e.target.value;home();var n=document.getElementById('q');n.focus();n.setSelectionRange(n.value.length,n.value.length);};
+  document.getElementById('chips').onclick=function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.fav){ui.fav=!ui.fav;}else{ui.cat=b.dataset.c;ui.fav=false;if(ui.cat==='All')ui.q='';}home();window.scrollTo(0,0);};
+  document.querySelector('.grid').onclick=function(e){var b=e.target.closest('button[data-star]');if(b)toggleFav(b.dataset.star);};
+  var ab=document.getElementById('addsvc');if(ab)ab.onclick=openAdd;
+  if(s0){q.focus();q.setSelectionRange(q.value.length,q.value.length);}
+}
+function stepChart(hist){
+  var W=700,H=120,L=60,R=8,T=8,B=22,pw=W-L-R,ph=H-T-B,now=Date.now(),start=now-864e5,names=['None','Minor','Major','Critical'];
+  var g='';for(var l=0;l<4;l++){var y=T+ph-(l/3)*ph;g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--mute)">'+names[l]+'</text>';}
+  var pts=hist.map(function(p){return[L+((p.t-start)/864e5)*pw,T+ph-(p.level/3)*ph];});
+  var d=pts.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join('');
+  var tl=[0,.5,1].map(function(f,i){return'<text x="'+(L+f*pw)+'" y="'+(H-6)+'" text-anchor="'+(i===0?'start':i===2?'end':'middle')+'" font-size="11" fill="var(--mute)">'+new Date(start+f*864e5).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</text>';}).join('');
+  return'<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Official status over the last 24 hours">'+g+tl+(pts.length>1?'<path d="'+d+'" fill="none" stroke="var(--bad)" stroke-width="2"/>':'')+'</svg>'+(hist.length<2?'<p class="note">History fills in as the server keeps checking. Come back in a few minutes.</p>':'');
+}
+function barChart(h){
+  var W=700,H=120,L=30,R=8,T=8,B=22,pw=W-L-R,ph=H-T-B,max=Math.max.apply(null,h.concat([4])),bw=pw/24;
+  var g=h.map(function(v,i){var bh=v/max*ph;return'<rect x="'+(L+i*bw+2)+'" y="'+(T+ph-bh)+'" width="'+(bw-4)+'" height="'+bh+'" fill="var(--bad)" rx="2"/>';}).join('');
+  return'<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="User reports per hour"><line x1="'+L+'" x2="'+(W-R)+'" y1="'+(T+ph)+'" y2="'+(T+ph)+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(T+10)+'" text-anchor="end" font-size="11" fill="var(--mute)">'+max+'</text><text x="'+L+'" y="'+(H-6)+'" font-size="11" fill="var(--mute)">24 h ago</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--mute)">now</text>'+g+'</svg>';
+}
+function detail(s){
+  var o=s.official,r=s.reports,tot=Math.max(1,r.last24h);
+  app.innerHTML='<a class="back" href="#home">← All services</a>'+
+  '<div class="dhead"><div><h1>'+esc(s.name)+'</h1><span class="pill '+s.state+'">'+LABEL[s.state]+'</span>'+(s.userSpike?' <span class="pill degraded">Spike in user reports</span>':'')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="fav" type="button" aria-pressed="'+isFav(s.id)+'">'+(isFav(s.id)?'★ Following':'☆ Follow')+'</button>'+(demo?'<button class="btn ghost" id="sim" type="button">'+(s.state==='outage'?'End test outage':'Start test outage')+'</button>':'')+'<button class="btn" id="rep" type="button">I have a problem with '+esc(s.name)+'</button></div></div>'+
+  (s.error?'<p class="err">Could not read the official status feed: '+esc(s.error)+'</p>':'')+
+  (s.reportsOnly?'<div class="panel"><p class="note" style="margin:0">This service has no status feed, so its status comes from user reports only. A problem shows up here when people report it.</p></div>':'<div class="panel"><h2>Official status, last 24 hours</h2>'+stepChart(s.history)+'<p class="note">'+(o?esc(o.description)+'. Source checked '+ago(s.checkedAt)+'.':'')+'</p></div>')+
+  '<div class="panel"><h2>User reports per hour</h2>'+barChart(r.hourly)+'<p class="note">'+r.last24h+' reports in 24 hours. The service is flagged when '+s.spikeThreshold+' or more arrive within 15 minutes.</p></div>'+
+  '<div class="cols"><div class="panel"><h2>Active incidents</h2>'+((o&&o.incidents.length)?o.incidents.map(function(i){return'<div class="inc"><strong>'+esc(i.name)+'</strong><br><small>'+esc(i.status)+' · '+esc(i.impact)+' · started '+ago(Date.parse(i.startedAt))+'</small><div>'+esc(i.latest)+'</div></div>';}).join(''):'<p class="note">None reported by the service.</p>')+
+  '<h2 style="margin-top:16px">Components</h2>'+((o&&o.components.length)?o.components.map(function(c){return'<div class="comp"><span>'+esc(c.name)+'</span><span class="note">'+esc(c.status.replace(/_/g,' '))+'</span></div>';}).join(''):'<p class="note">No component data.</p>')+'</div>'+
+  '<div class="panel"><h2>What people report</h2>'+ISSUES.map(function(t){var p=Math.round(r.types[t]/tot*100);return'<div class="bar"><div class="l"><span>'+ICON[t]+' '+t+'</span><span>'+r.types[t]+'</span></div><div class="t"><div class="f" style="width:'+p+'%"></div></div></div>';}).join('')+
+  '<h2 style="margin-top:16px">Latest reports</h2>'+(r.recent.length?r.recent.map(function(x){return'<div class="comp" style="flex-direction:column"><div style="display:flex;justify-content:space-between"><span>'+ICON[x.type]+' '+esc(x.type)+' · '+esc(x.city||'Unknown location')+'</span><span class="note">'+ago(x.t)+'</span></div>'+(x.comment?'<div class="note" style="margin-top:2px">'+esc(x.comment)+'</div>':'')+'</div>';}).join(''):'<p class="note">No user reports yet.</p>')+'</div></div>';
+  document.getElementById('fav').onclick=function(){toggleFav(s.id);};
+  var sm=document.getElementById('sim');if(sm)sm.onclick=function(){fetch('/api/demo/toggle/'+encodeURIComponent(s.id),{method:'POST'}).then(load);};
+  document.getElementById('rep').onclick=function(){cur=s;document.getElementById('dt').textContent='Report a problem with '+s.name;document.getElementById('derr').textContent='';
+    document.getElementById('dopts').innerHTML=ISSUES.map(function(t,i){return'<label><input type="radio" name="iss" value="'+t+'"'+(i?'':' checked')+'> <span aria-hidden="true">'+ICON[t]+'</span> '+t+'</label>';}).join('');
+    document.getElementById('dcity').value='';document.getElementById('dcomment').value='';dlg.showModal();};
+}
+function openAdd(){
+  document.getElementById('aerr').textContent='';
+  ['aname','acat','aurl'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('acats').innerHTML=Array.from(new Set(data.map(function(s){return s.category;}))).map(function(c){return'<option value="'+esc(c)+'">';}).join('');
+  document.getElementById('adlg').showModal();
+}
+document.getElementById('acancel').onclick=function(){document.getElementById('adlg').close();};
+document.getElementById('aform').onsubmit=function(e){
+  e.preventDefault();var b=document.getElementById('ago'),err=document.getElementById('aerr');b.disabled=true;err.textContent='';
+  fetch('/api/services',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:document.getElementById('aname').value,category:document.getElementById('acat').value,url:document.getElementById('aurl').value})})
+  .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+  .then(function(x){b.disabled=false;if(!x.ok){err.textContent=x.j.error||'Could not add the service.';return;}document.getElementById('adlg').close();ui.q='';ui.cat='All';ui.fav=false;load().then(function(){location.hash='#'+x.j.id;});})
+  .catch(function(){b.disabled=false;err.textContent='Could not reach the server. Try again.';});
+};
+document.getElementById('dcancel').onclick=function(){dlg.close();};
+document.getElementById('rform').onsubmit=function(e){
+  e.preventDefault();var b=document.getElementById('dgo');b.disabled=true;
+  fetch('/api/report/'+encodeURIComponent(cur.id),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type:(document.querySelector('input[name=iss]:checked')||{}).value,city:document.getElementById('dcity').value,comment:document.getElementById('dcomment').value})})
+  .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+  .then(function(x){b.disabled=false;if(!x.ok){document.getElementById('derr').textContent=x.j.error||'Could not send the report.';return;}dlg.close();load();})
+  .catch(function(){b.disabled=false;document.getElementById('derr').textContent='Could not reach the server. Try again.';});
+};
+window.addEventListener('hashchange',route);
+document.getElementById('alerts').onclick=askAlerts;alertBtn();
+fetch('/api/config').then(function(r){return r.json();}).then(function(c){demo=!!c.demo;canAdd=!!c.addServices;}).catch(function(){}).then(load);setInterval(load,30000);
+})();
+</script>
+</body>
+</html>
